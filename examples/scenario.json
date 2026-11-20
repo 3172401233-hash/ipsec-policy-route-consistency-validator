@@ -1,0 +1,61 @@
+{
+  "now": 1000000,
+  "sample": {
+    "src": "10.0.0.0/24",
+    "dst": "10.1.0.0/16",
+    "protocol": "tcp",
+    "dst_ports": [0, 65535],
+    "direction": "outbound"
+  },
+  "interfaces": [
+    {"name": "eth0", "networks": ["192.0.2.1/30"], "up": true},
+    {"name": "eth1", "networks": ["10.0.0.1/24"], "up": true},
+    {"name": "ipsec0", "networks": [], "up": true}
+  ],
+  "tunnels": [
+    {
+      "id": "tun1",
+      "local_endpoint": "192.0.2.1",
+      "remote_endpoint": "203.0.113.2",
+      "interface": "ipsec0",
+      "natt_boundary": true
+    }
+  ],
+  "policies": [
+    {
+      "id": "p-protect-out",
+      "priority": 100,
+      "action": "protect",
+      "tunnel_id": "tun1",
+      "selector": {"src": "10.0.0.0/24", "dst": "10.1.0.0/16", "direction": "outbound"}
+    },
+    {
+      "id": "p-protect-in",
+      "priority": 100,
+      "action": "protect",
+      "tunnel_id": "tun1",
+      "selector": {"src": "10.1.0.0/16", "dst": "10.0.0.0/24", "direction": "inbound"}
+    },
+    {
+      "id": "p-discard-5",
+      "priority": 200,
+      "action": "discard",
+      "selector": {"src": "10.0.0.0/24", "dst": "10.1.5.0/24", "direction": "outbound"}
+    }
+  ],
+  "sas": [
+    {
+      "spi": "0x1001",
+      "tunnel_id": "tun1",
+      "selector": {"src": "10.0.0.0/24", "dst": "10.1.0.0/16", "direction": "outbound"},
+      "valid_from": 999000,
+      "valid_to": 1003600,
+      "encap": "udp",
+      "direction": "outbound"
+    }
+  ],
+  "routes": [
+    {"prefix": "10.1.0.0/16", "interface": "ipsec0", "kind": "tunnel", "tunnel_id": "tun1"},
+    {"prefix": "0.0.0.0/0", "interface": "eth0", "kind": "direct", "next_hop": "192.0.2.2"}
+  ]
+}
